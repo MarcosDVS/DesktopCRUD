@@ -4,11 +4,14 @@ using System;
 using System.Data;
 using System.Linq;
 using System.Windows.Forms;
+using Microsoft.EntityFrameworkCore;
 
 namespace TEST
 {
     public partial class Form1 : Form
     {
+        public int? id;
+        Customer customerRequest = null;
         public Form1()
         {
             InitializeComponent();
@@ -23,7 +26,9 @@ namespace TEST
         {
             txtName.Text = string.Empty;
             txtLastName.Text = string.Empty;
+            id = null;
         }
+
         private void LoadData()
         {
             using (var ctx = new MyDbContext())
@@ -34,22 +39,56 @@ namespace TEST
                 dgCustomer.AutoGenerateColumns = true;
             }
         }
+
+        private int? GetId()
+        {
+            try
+            {
+                return int.Parse(dgCustomer.Rows[dgCustomer.CurrentRow.Index].Cells[0].Value.ToString());
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public void ButtonChange()
+        {
+            if(id!=null)
+            {
+                btnAdd.Text = "EDIT";
+                btnAdd.BackColor = Color.DarkOrange;
+            }
+            else
+            {
+                btnAdd.Text = "ADD";
+                btnAdd.BackColor = Color.DarkGreen;
+            }
+        }
         private void btnAdd_Click(object sender, EventArgs e)
         {
             using (var ctx = new MyDbContext())
             {
                 if (txtName.Text != string.Empty && txtLastName.Text != string.Empty)
                 {
-                    Customer customer = new Customer()
-                    {
-                        Name = txtName.Text,
-                        LastName = txtLastName.Text
+                    if (id == null)
+                        customerRequest = new Customer();
+                    else
+                        customerRequest = ctx.Customers.Find(id);
 
-                    };
-                    ctx.Customers.Add(customer);
+                    customerRequest.Name = txtName.Text;
+                    customerRequest.LastName = txtLastName.Text;
+
+                    if (id == null)
+                        ctx.Customers.Add(customerRequest);
+                    else
+                        ctx.Entry(customerRequest).State = EntityState.Modified;
+
                     ctx.SaveChanges();
                     Clean();
                     LoadData();
+                    ButtonChange();
+                    customerRequest = null; // Reset the customerRequest after saving
                 }
                 else
                 {
@@ -62,18 +101,20 @@ namespace TEST
         {
             if (dgCustomer.SelectedRows.Count > 0)
             {
-                using (var ctx = new MyDbContext())
+                id = GetId();
+                if (id != null)
                 {
-                    int customerId = Convert.ToInt32(dgCustomer.SelectedRows[0].Cells["Id"].Value);
-                    var customer = ctx.Customers.SingleOrDefault(c => c.Id == customerId);
-                    if (customer != null)
+                    using (var ctx = new MyDbContext())
                     {
-                        customer.Name = txtName.Text;
-                        customer.LastName = txtLastName.Text;
-                        ctx.SaveChanges();
-                        Clean();
-                        LoadData();
+                        var customer = ctx.Customers.SingleOrDefault(c => c.Id == id);
+                        if (customer != null)
+                        {
+                            customerRequest = customer;
+                            txtName.Text = customer.Name;
+                            txtLastName.Text = customer.LastName;
+                        }
                     }
+                    ButtonChange();
                 }
             }
             else
@@ -86,16 +127,19 @@ namespace TEST
         {
             if (dgCustomer.SelectedRows.Count > 0)
             {
-                using (var ctx = new MyDbContext())
+                int? customerId = GetId();
+                if (customerId != null)
                 {
-                    int customerId = Convert.ToInt32(dgCustomer.SelectedRows[0].Cells["Id"].Value);
-                    var customer = ctx.Customers.SingleOrDefault(c => c.Id == customerId);
-                    if (customer != null)
+                    using (var ctx = new MyDbContext())
                     {
-                        ctx.Customers.Remove(customer);
-                        ctx.SaveChanges();
-                        Clean();
-                        LoadData();
+                        var customer = ctx.Customers.SingleOrDefault(c => c.Id == customerId);
+                        if (customer != null)
+                        {
+                            ctx.Customers.Remove(customer);
+                            ctx.SaveChanges();
+                            Clean();
+                            LoadData();
+                        }
                     }
                 }
             }
@@ -107,12 +151,8 @@ namespace TEST
 
         private void dgCustomer_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex >= 0)
-            {
-                DataGridViewRow row = dgCustomer.Rows[e.RowIndex];
-                txtName.Text = row.Cells["Name"].Value.ToString();
-                txtLastName.Text = row.Cells["LastName"].Value.ToString();
-            }
+
         }
     }
 }
+

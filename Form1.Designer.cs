@@ -191,7 +191,7 @@
             MaximizeBox = false;
             Name = "Form1";
             StartPosition = FormStartPosition.CenterScreen;
-            Text = "Form1";
+            Text = "CUSTOMER";
             Load += Form1_Load;
             ((System.ComponentModel.ISupportInitialize)dgCustomer).EndInit();
             ((System.ComponentModel.ISupportInitialize)customerBindingSource).EndInit();

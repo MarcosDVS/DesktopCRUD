@@ -15,11 +15,11 @@ namespace TEST
         public Form1()
         {
             InitializeComponent();
+            LoadData();
         }
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            LoadData();
         }
 
         public void Clean()

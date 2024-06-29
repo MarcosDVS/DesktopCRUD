@@ -1,4 +1,5 @@
 using TEST.Context;
+using TEST.View;
 
 namespace TEST
 {
@@ -20,7 +21,7 @@ namespace TEST
                 ctx.Database.EnsureCreated();
             }
 
-            Application.Run(new Form1());
+            Application.Run(new frmCustomer());
         }
     }
 }
